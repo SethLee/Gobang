@@ -1,14 +1,19 @@
 import React, { Component, createRef } from 'react'
-import { GAME_STEP } from '../Constants'
+import { GAME_STEP,GAME_RESTART } from '../Constants'
 import PubSub from 'pubsub-js'
 
 export default class ChessBoard extends Component {
     constructor(props){
         super(props);
-        this.blackFirst=true;
-        this.blackTurn=true;
         this.canvas=createRef();
-        this.gameOver=false;
+        this.initGameData();
+        this.blackFirst=props.blackFirst;
+        this.isBlackTurn=this.blackFirst;
+    }
+    componentDidMount(){
+        this.drawChessBoard();
+    }
+    initGameData=()=>{
         this.gameData=[];
         for(var i=0;i<15;i++){
             this.gameData[i]=[];
@@ -17,9 +22,20 @@ export default class ChessBoard extends Component {
             }
         }
     }
-    componentDidMount(){
-        this.drawChessBoard();
+    restartGame=(msg,data)=>{
+        var pen = this.canvas.current.getContext("2d");
+        pen.putImageData(this.clearBoard,0,0);
+        this.initGameData();
+        if(data.gameOver){
+            this.blackFirst=!this.props.blackFirst;
+        }
+        var stepInfo={
+            isBlackTurn:!this.isBlackTurn,
+            gameOver:false
+        };
+        PubSub.publish(GAME_STEP,stepInfo);
     }
+    restartToken=PubSub.subscribe(GAME_RESTART,this.restartGame);
     drawChessBoard(){
         var pen = this.canvas.current.getContext("2d");
         for(var i = 0;i<=600;i+=40){
@@ -31,6 +47,7 @@ export default class ChessBoard extends Component {
             pen.closePath();
             pen.stroke();
         }
+        this.clearBoard=pen.getImageData(0,0,600,600);
     }
     drawChess(x,y,color){
         var pen = this.canvas.current.getContext("2d");
@@ -125,7 +142,7 @@ export default class ChessBoard extends Component {
         return count;
     }
     putChess=(e)=>{
-        if(this.gameOver){
+        if(this.props.gameOver){
             return;
         }
         var x=parseInt((e.clientX-this.canvas.current.getBoundingClientRect().left)/40);
@@ -133,16 +150,14 @@ export default class ChessBoard extends Component {
         if(this.gameData[x][y]!=="0"){
             return;
         }
-        this.gameData[x][y]=this.blackTurn?"b":"w";
-        this.drawChess(x*40+20,y*40+20,this.blackTurn?"black":"white")
-        if(this.hasWon(x,y,this.blackTurn?"b":"w")){
-            this.gameOver=true;
-            // alert(this.blackTurn?"black win!":"white win!");
-            // this.blackFirst=!this.blackFirst;
-            // return;
-        }
-        this.blackTurn=!this.blackTurn;
-        PubSub.publish(GAME_STEP,this.blackTurn);
+        this.gameData[x][y]=this.isBlackTurn?"b":"w";
+        this.drawChess(x*40+20,y*40+20,this.isBlackTurn?"black":"white");
+        var stepInfo={
+            isBlackTurn:this.isBlackTurn,
+            gameOver:this.hasWon(x,y,this.isBlackTurn?"b":"w")
+        };
+        PubSub.publish(GAME_STEP,stepInfo);
+        this.isBlackTurn=!this.isBlackTurn;
     }
     render() {
         return (
