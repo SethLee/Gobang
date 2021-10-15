@@ -28,6 +28,9 @@ export default class ChessBoard extends Component {
         this.initGameData();
         if(data.gameOver){
             this.blackFirst=!this.props.blackFirst;
+            this.isBlackTurn=!this.blackFirst;
+        }else{
+            this.isBlackTurn=this.blackFirst;
         }
         var stepInfo={
             isBlackTurn:!this.isBlackTurn,
