@@ -52,11 +52,19 @@ export default class ChessBoard extends Component {
         }
         this.clearBoard = pen.getImageData(0, 0, 600, 600);
     }
-    drawChess(x, y, color) {
+    drawChess(x, y, isBlackTurn) {
         var pen = this.canvas.current.getContext("2d");
         pen.beginPath();
         pen.arc(x, y, 20, 0, 2 * Math.PI);
-        pen.fillStyle = color;
+        var grd=pen.createRadialGradient(x+2,y-2,20,x-2,y+2,0);
+        if(isBlackTurn){
+            grd.addColorStop(0,"#0A0A0A");
+            grd.addColorStop(1,"#636766");
+        }else{
+            grd.addColorStop(0,"#D1D1D1");
+            grd.addColorStop(1,"#F9F9F9");
+        }
+        pen.fillStyle = grd;
         pen.fill();
     }
     hasWon(x, y, c) {
@@ -154,7 +162,7 @@ export default class ChessBoard extends Component {
             return;
         }
         this.gameData[x][y] = this.isBlackTurn ? "b" : "w";
-        this.drawChess(x * 40 + 20, y * 40 + 20, this.isBlackTurn ? "black" : "white");
+        this.drawChess(x * 40 + 20, y * 40 + 20, this.isBlackTurn);
         var stepInfo = {
             isBlackTurn: this.isBlackTurn,
             gameOver: this.hasWon(x, y, this.isBlackTurn ? "b" : "w")
