@@ -1,174 +1,174 @@
 import React, { Component, createRef } from 'react'
-import { GAME_STEP,GAME_RESTART } from '../Constants'
+import { GAME_STEP, GAME_RESTART } from '../Constants'
 import PubSub from 'pubsub-js'
 
 export default class ChessBoard extends Component {
-    constructor(props){
+    constructor(props) {
         super(props);
-        this.canvas=createRef();
+        this.canvas = createRef();
         this.initGameData();
-        this.blackFirst=props.blackFirst;
-        this.isBlackTurn=this.blackFirst;
+        this.blackFirst = props.blackFirst;
+        this.isBlackTurn = this.blackFirst;
     }
-    componentDidMount(){
+    componentDidMount() {
         this.drawChessBoard();
     }
-    initGameData=()=>{
-        this.gameData=[];
-        for(var i=0;i<15;i++){
-            this.gameData[i]=[];
-            for(var j=0;j<15;j++){
-                this.gameData[i][j]="0";
+    initGameData = () => {
+        this.gameData = [];
+        for (var i = 0; i <= 15; i++) {
+            this.gameData[i] = [];
+            for (var j = 0; j <= 15; j++) {
+                this.gameData[i][j] = "0";
             }
         }
     }
-    restartGame=(msg,data)=>{
+    restartGame = (msg, data) => {
         var pen = this.canvas.current.getContext("2d");
-        pen.putImageData(this.clearBoard,0,0);
+        pen.putImageData(this.clearBoard, 0, 0);
         this.initGameData();
-        if(data.gameOver){
-            this.blackFirst=!this.props.blackFirst;
-            this.isBlackTurn=!this.blackFirst;
-        }else{
-            this.isBlackTurn=this.blackFirst;
+        if (data.gameOver) {
+            this.blackFirst = !this.props.blackFirst;
+            this.isBlackTurn = !this.blackFirst;
+        } else {
+            this.isBlackTurn = this.blackFirst;
         }
-        var stepInfo={
-            isBlackTurn:!this.isBlackTurn,
-            gameOver:false
+        var stepInfo = {
+            isBlackTurn: !this.isBlackTurn,
+            gameOver: false
         };
-        PubSub.publish(GAME_STEP,stepInfo);
+        PubSub.publish(GAME_STEP, stepInfo);
     }
-    restartToken=PubSub.subscribe(GAME_RESTART,this.restartGame);
-    drawChessBoard(){
+    restartToken = PubSub.subscribe(GAME_RESTART, this.restartGame);
+    drawChessBoard() {
         var pen = this.canvas.current.getContext("2d");
-        for(var i = 0;i<=600;i+=40){
+        for (var i = 0; i <= 600; i += 40) {
             pen.beginPath();
-            pen.moveTo(20,20+i);
-            pen.lineTo(580,20+i);
-            pen.moveTo(20+i,20);
-            pen.lineTo(20+i,580);
+            pen.moveTo(20, 20 + i);
+            pen.lineTo(580, 20 + i);
+            pen.moveTo(20 + i, 20);
+            pen.lineTo(20 + i, 580);
             pen.closePath();
             pen.stroke();
         }
-        this.clearBoard=pen.getImageData(0,0,600,600);
+        this.clearBoard = pen.getImageData(0, 0, 600, 600);
     }
-    drawChess(x,y,color){
+    drawChess(x, y, color) {
         var pen = this.canvas.current.getContext("2d");
         pen.beginPath();
-        pen.arc(x,y,20,0,2*Math.PI);
-        pen.fillStyle=color;
+        pen.arc(x, y, 20, 0, 2 * Math.PI);
+        pen.fillStyle = color;
         pen.fill();
     }
-    hasWon(x,y,c){
-        if(this.countHorizontal(x,y,c)===5){
+    hasWon(x, y, c) {
+        if (this.countHorizontal(x, y, c) === 5) {
             return true;
-        }else if(this.countVertical(x,y,c)===5){
+        } else if (this.countVertical(x, y, c) === 5) {
             return true;
-        }else if(this.countSlash(x,y,c)===5){
+        } else if (this.countSlash(x, y, c) === 5) {
             return true;
-        }else if(this.countBackSlash(x,y,c)===5){
+        } else if (this.countBackSlash(x, y, c) === 5) {
             return true;
-        }else{
+        } else {
             return false;
         }
     }
-    countHorizontal(x,y,c){
-        var count=1;
-        for(var i=1;i<x;i++){
-            if(this.gameData[x-i][y]===c){
+    countHorizontal(x, y, c) {
+        var count = 1;
+        for (var i = x - 1; i >= 0; i--) {
+            if (this.gameData[i][y] === c) {
                 count++;
-            }else{
+            } else {
                 break;
             }
         }
-        for(var j=1;j<15-x;j++){
-            if(this.gameData[x+j][y]===c){
+        for (i = x + 1; i <= 15; i++) {
+            if (this.gameData[i][y] === c) {
                 count++;
-            }else{
-                break;
-            }
-        }
-        return count;
-    }
-    countVertical(x,y,c){
-        var count=1;
-        for(var i=1;i<y;i++){
-            if(this.gameData[x][y-i]===c){
-                count++;
-            }else{
-                break;
-            }
-        }
-        for(var j=1;j<15-y;j++){
-            if(this.gameData[x][y+j]===c){
-                count++;
-            }else{
+            } else {
                 break;
             }
         }
         return count;
     }
-    countSlash(x,y,c){
-        var count=1;
-        for(var i=x-1,j=y+1;i>=0&&j<=15;i--,j++){
-            if(this.gameData[i][j]===c){
+    countVertical(x, y, c) {
+        var count = 1;
+        for (var i = y - 1; i >= 0; i--) {
+            if (this.gameData[x][i] === c) {
                 count++;
-            }else{
+            } else {
                 break;
             }
         }
-        for(i=x+1,j=y-1;i<=15&&j>=0;i++,j--){
-            if(this.gameData[i][j]===c){
+        for (i = y + 1; i <= 15; i++) {
+            if (this.gameData[x][i] === c) {
                 count++;
-            }else{
-                break;
-            }
-        }
-        return count;
-    }
-    countBackSlash(x,y,c){
-        var count=1;
-        for(var i=x-1,j=y-1;i>=0&&j>=0;i--,j--){
-            if(this.gameData[i][j]===c){
-                count++;
-            }else{
-                break;
-            }
-        }
-        for(i=x+1,j=y+1;i<=15&&j<=15;i++,j++){
-            if(this.gameData[i][j]===c){
-                count++;
-            }else{
+            } else {
                 break;
             }
         }
         return count;
     }
-    putChess=(e)=>{
-        if(this.props.gameOver){
+    countSlash(x, y, c) {
+        var count = 1;
+        for (var i = x - 1, j = y + 1; i >= 0 && j <= 15; i--, j++) {
+            if (this.gameData[i][j] === c) {
+                count++;
+            } else {
+                break;
+            }
+        }
+        for (i = x + 1, j = y - 1; i <= 15 && j >= 0; i++, j--) {
+            if (this.gameData[i][j] === c) {
+                count++;
+            } else {
+                break;
+            }
+        }
+        return count;
+    }
+    countBackSlash(x, y, c) {
+        var count = 1;
+        for (var i = x - 1, j = y - 1; i >= 0 && j >= 0; i--, j--) {
+            if (this.gameData[i][j] === c) {
+                count++;
+            } else {
+                break;
+            }
+        }
+        for (i = x + 1, j = y + 1; i <= 15 && j <= 15; i++, j++) {
+            if (this.gameData[i][j] === c) {
+                count++;
+            } else {
+                break;
+            }
+        }
+        return count;
+    }
+    putChess = (e) => {
+        if (this.props.gameOver) {
             return;
         }
-        var x=parseInt((e.clientX-this.canvas.current.getBoundingClientRect().left)/40);
-        var y=parseInt((e.clientY-this.canvas.current.getBoundingClientRect().top)/40);
-        if(this.gameData[x][y]!=="0"){
+        var x = parseInt((e.clientX - this.canvas.current.getBoundingClientRect().left) / 40);
+        var y = parseInt((e.clientY - this.canvas.current.getBoundingClientRect().top) / 40);
+        if (this.gameData[x][y] !== "0") {
             return;
         }
-        this.gameData[x][y]=this.isBlackTurn?"b":"w";
-        this.drawChess(x*40+20,y*40+20,this.isBlackTurn?"black":"white");
-        var stepInfo={
-            isBlackTurn:this.isBlackTurn,
-            gameOver:this.hasWon(x,y,this.isBlackTurn?"b":"w")
+        this.gameData[x][y] = this.isBlackTurn ? "b" : "w";
+        this.drawChess(x * 40 + 20, y * 40 + 20, this.isBlackTurn ? "black" : "white");
+        var stepInfo = {
+            isBlackTurn: this.isBlackTurn,
+            gameOver: this.hasWon(x, y, this.isBlackTurn ? "b" : "w")
         };
-        PubSub.publish(GAME_STEP,stepInfo);
-        this.isBlackTurn=!this.isBlackTurn;
+        PubSub.publish(GAME_STEP, stepInfo);
+        this.isBlackTurn = !this.isBlackTurn;
     }
     render() {
         return (
-            <canvas 
-                ref={this.canvas} 
+            <canvas
+                ref={this.canvas}
                 onClick={this.putChess}
-                width="600px" height="600px" 
-                style={{backgroundColor:'#E6B380'}}>
+                width="600px" height="600px"
+                style={{ backgroundColor: '#E6B380' }}>
             </canvas>
         )
     }
